@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { API_KEY, apiCoinData } from '../config';
+import { apiCoinData } from '../config';
 
 const getCoinData = async (coin: string) => {
     const res = await axios.get(apiCoinData, {
@@ -8,7 +8,7 @@ const getCoinData = async (coin: string) => {
             fsym: coin,
             tsym: 'USD',
             aggregate: 5,
-            api_key: API_KEY,
+            api_key: process.env.NEXT_PUBLIC_API_KEY,
         },
     });
     return res.data.Data;
