@@ -15,8 +15,8 @@ import { getCoinDataAsync } from '@/redux/slices/coinsSlice';
 import styles from './coin.module.css';
 
 const CoinDetails: NextPage = () => {
-    const router = useRouter();
-    const { id } = router.query;
+    const { query, isReady } = useRouter();
+    const { id } = query;
     const dispatch = useAppDispatch();
     const { coins } = useAppSelector((state) => state);
 
@@ -24,7 +24,7 @@ const CoinDetails: NextPage = () => {
         if (typeof id === 'string') {
             dispatch(getCoinDataAsync(id)).unwrap().then();
         }
-    }, []);
+    }, [isReady]);
 
     if (coins.createRequestStatus === 'pending') {
         return (
