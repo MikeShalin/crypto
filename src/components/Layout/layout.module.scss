@@ -1,0 +1,28 @@
+$footer: 80px;
+$header: 110px;
+
+.main {
+    min-height: calc(100vh - #{$footer} - #{$header});
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.footer {
+    display: flex;
+    flex: 1;
+    padding: 2rem 0;
+    border-top: 1px solid #eaeaea;
+    justify-content: center;
+    align-items: center;
+    max-height: $footer;
+}
+
+.header {
+    min-height: $header;
+}
+
+.logo {
+    margin-right: 4px;
+}
