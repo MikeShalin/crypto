@@ -1,4 +1,3 @@
-export type RequestStatus = 'idle' | 'pending' | 'rejected' | 'fulfilled';
 export type Coins = {
     close: number;
     conversionSymbol: string;

@@ -1,75 +1,52 @@
 import { Box, Skeleton, Stack } from '@chakra-ui/react';
-import format from 'date-fns/format';
-import fromUnixTime from 'date-fns/fromUnixTime';
 // eslint-disable-next-line prettier/prettier
 import type { NextPage } from 'next';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import numeral from 'numeral';
-import { useEffect } from 'react';
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useEffect, useState } from 'react';
 
-import { Tooltip as ChartTooltip } from '@/components/Tooltip';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { getCoinDataAsync } from '@/redux/slices/coinsSlice';
+import postAPI from '@/services/postAPI';
+import type { Coins } from '@/types';
 
 import styles from './coin.module.css';
 
-const CoinDetails: NextPage = () => {
-    const { query, isReady } = useRouter();
-    const { id } = query;
-    const dispatch = useAppDispatch();
-    const { coins } = useAppSelector((state) => state);
+const DynamicComponent = dynamic<{ coins: Coins[] }>(() => import('@/components/Charts').then((module) => module.Charts), {
+    loading: () => (
+        <Box paddingTop='4rem'>
+            <Stack>
+                <Skeleton width={1200} height={115} />
+                <Skeleton width={1200} height={115} />
+                <Skeleton width={1200} height={115} />
+                <Skeleton width={1200} height={115} />
+            </Stack>
+        </Box>
+    ),
+});
 
+const DynamicLoader = dynamic(() => import('./Loader'), { ssr: false });
+
+export async function getServerSideProps(context: any) {
+    const { id } = context.params;
+    const coins = await postAPI.getCoinData(id);
+    return { props: { coins: coins.Data } };
+}
+
+const CoinDetails: NextPage<{ coins: Coins[] }> = ({ coins }) => {
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
     useEffect(() => {
-        if (typeof id === 'string') {
-            dispatch(getCoinDataAsync(id)).unwrap().then();
-        }
-    }, [isReady]);
-
-    if (coins.createRequestStatus === 'pending') {
-        return (
-            <Box paddingTop='4rem'>
-                <Stack>
-                    <Skeleton width={1200} height={115} />
-                    <Skeleton width={1200} height={115} />
-                    <Skeleton width={1200} height={115} />
-                    <Skeleton width={1200} height={115} />
-                </Stack>
-            </Box>
-        );
+        setLoading(false);
+    }, [coins]);
+    if (!coins) {
+        return <DynamicLoader />; // todo если я перехожу по роуту - next js ждет загрузку данных и тормозит - это заметно на маленькой скорости интернета
     }
+    if (router.isFallback || loading) {
+        return <DynamicLoader />;
+    }
+
     return (
         <main className={styles.main}>
-            <ResponsiveContainer width={1200} height={500}>
-                <LineChart
-                    data={coins.data?.map(({ close, time, open }) => ({
-                        price: close,
-                        date: format(fromUnixTime(time), 'MM/dd/yyyy'),
-                        time: format(fromUnixTime(time), 'p'),
-                        open,
-                    }))}
-                >
-                    <XAxis dataKey='time' minTickGap={90} padding={{ right: 20 }} />
-                    <YAxis width={90} domain={['dataMin', 'dataMax']} orientation='right' padding={{ bottom: 50 }} />
-                    <CartesianGrid vertical={false} />
-                    <Tooltip
-                        // eslint-disable-next-line react/no-unstable-nested-components
-                        content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                                const {
-                                    payload: { date, time, ...props },
-                                } = payload[0];
-                                const price = numeral(props.price).format('0,0.0000').replace(/0*$/, '');
-                                const open = numeral(props.open).format('0,0.00');
-                                return <ChartTooltip date={date} time={time} price={`$ ${price}`} open={`$ ${open}`} />;
-                            }
-
-                            return null;
-                        }}
-                    />
-                    <Line type='monotone' dataKey='price' stroke='#8884d8' fillOpacity={1} fill='url(#colorUv)' dot={false} />
-                </LineChart>
-            </ResponsiveContainer>
+            <DynamicComponent coins={coins} />
         </main>
     );
 };

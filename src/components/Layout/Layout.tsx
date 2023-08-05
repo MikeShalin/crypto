@@ -13,8 +13,8 @@ interface LayoutProps {
 export const Layout: FC<LayoutProps> = ({ children }) => (
     <div className={styles.container}>
         <Head>
-            <title>Next.js typescript Redux Toolkit</title>
-            <meta name='description' content='Next.js typescript Redux Toolkit' />
+            <title>Chats</title>
+            <meta name='description' content='Chats' />
         </Head>
         <header className={styles.header}>
             <nav>
